@@ -7,12 +7,16 @@ services:
     startCommand: python main.py
     envVars:
       - key: GOOGLE_SHEETS_ID
+        value: "REPLACE_ME"
         scope: run
       - key: TELEGRAM_BOT_TOKEN
+        value: "REPLACE_ME"
         scope: run
       - key: TELEGRAM_RECRUITER_CHAT_ID
+        value: "REPLACE_ME"
         scope: run
       - key: GOOGLE_CREDENTIALS_JSON
+        value: "REPLACE_ME"
         scope: run
       - key: CHECK_INTERVAL_HOURS
         value: "1"
