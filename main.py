@@ -18,7 +18,7 @@ class CandidateBot:
     def __init__(self):
         self.db = Database()
         self.sheets_api = GoogleSheetsAPI()
-        self.telegram_bot = TelegramBot()
+        self.telegram_bot = TelegramBot(database=self.db)
         self.scheduler = BackgroundScheduler()
     
     async def check_candidates(self):
@@ -28,6 +28,12 @@ class CandidateBot:
         try:
             candidates = self.sheets_api.get_candidates()
             logger.info(f"Найдено {len(candidates)} кандидатов в таблице")
+            
+            # Собираем все уникальные имена рекрутеров для кэша
+            recruiter_names = list(set([c['recruiter_id'] for c in candidates if c['recruiter_id']]))
+            recruiter_names.sort()
+            self.db.set_unique_recruiter_names(recruiter_names)
+            logger.info(f"Уникальных рекрутеров в таблице: {', '.join(recruiter_names) if recruiter_names else 'нет'}")
             
             # Добавить новых кандидатов
             for candidate in candidates:
@@ -39,7 +45,7 @@ class CandidateBot:
                         start_date=candidate['start_date'],
                         recruiter_id=candidate.get('recruiter_id')
                     )
-                    logger.info(f"✅ Добавлен новый кандидат: {candidate['name']}")
+                    logger.info(f"✅ Добавлен новый кандидат: {candidate['name']} (рекрутер: {candidate.get('recruiter_id', 'не указан')})")
             
             # Проверить напоминания
             await self.check_reminders()
@@ -55,15 +61,22 @@ class CandidateBot:
             
             for candidate_id, name, obj, start_date, recruiter_id in candidates:
                 if self._should_send_reminder(start_date):
-                    # Отправить напоминание
-                    chat_id = recruiter_id if recruiter_id else None
-                    success = await self.telegram_bot.send_reminder(name, obj, chat_id)
+                    # Получаем chat_id рекрутера из БД по его имени
+                    chat_id = None
+                    if recruiter_id:
+                        chat_id = self.db.get_chat_id_by_recruiter_name(recruiter_id)
                     
-                    if success:
-                        self.db.mark_reminder_sent(candidate_id)
-                        logger.info(f"📱 Напоминание отправлено для {name}")
+                    if chat_id:
+                        # Отправить напоминание зарегистрированному рекрутеру
+                        success = await self.telegram_bot.send_reminder(name, obj, chat_id)
+                        
+                        if success:
+                            self.db.mark_reminder_sent(candidate_id)
+                            logger.info(f"📱 Напоминание отправлено {recruiter_id} о кандидате {name}")
+                        else:
+                            logger.error(f"❌ Не удалось отправить напоминание для {name}")
                     else:
-                        logger.error(f"❌ Не удалось отправить напоминание для {name}")
+                        logger.warning(f"⚠️ Рекрутер {recruiter_id} не зарегистрирован в боте (кандидат: {name})")
         
         except Exception as e:
             logger.error(f"❌ Ошибка при проверке напоминаний: {e}")

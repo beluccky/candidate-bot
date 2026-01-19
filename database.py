@@ -26,6 +26,14 @@ class Database:
                     updated_at TEXT
                 )
             ''')
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS recruiters (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    chat_id TEXT UNIQUE NOT NULL,
+                    recruiter_name TEXT NOT NULL,
+                    created_at TEXT
+                )
+            ''')
             conn.commit()
     
     def candidate_exists(self, candidate_id):
@@ -84,3 +92,57 @@ class Database:
                 FROM candidates
             ''')
             return cursor.fetchall()
+    
+    def add_recruiter(self, chat_id, recruiter_name):
+        """Добавить рекрутера или обновить если уже существует"""
+        now = datetime.now().isoformat()
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT OR REPLACE INTO recruiters (chat_id, recruiter_name, created_at)
+                    VALUES (?, ?, ?)
+                ''', (chat_id, recruiter_name, now))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Ошибка при добавлении рекрутера: {e}")
+            return False
+    
+    def get_recruiter_by_chat_id(self, chat_id):
+        """Получить имя рекрутера по chat_id"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT recruiter_name FROM recruiters WHERE chat_id = ?
+            ''', (chat_id,))
+            result = cursor.fetchone()
+            return result[0] if result else None
+    
+    def get_chat_id_by_recruiter_name(self, recruiter_name):
+        """Получить chat_id рекрутера по его имени"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT chat_id FROM recruiters WHERE recruiter_name = ?
+            ''', (recruiter_name,))
+            result = cursor.fetchone()
+            return result[0] if result else None
+    
+    def get_all_recruiters(self):
+        """Получить всех зарегистрированных рекрутеров"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT chat_id, recruiter_name FROM recruiters ORDER BY recruiter_name
+            ''')
+            return cursor.fetchall()
+    
+    def set_unique_recruiter_names(self, names):
+        """Сохранить список уникальных имен рекрутеров из таблицы"""
+        self.recruiter_names_cache = names
+    
+    def get_unique_recruiter_names(self):
+        """Получить список уникальных имен рекрутеров"""
+        # Возвращаем кэшированный список из последней проверки таблицы
+        return getattr(self, 'recruiter_names_cache', [])
