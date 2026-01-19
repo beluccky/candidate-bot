@@ -1,0 +1,33 @@
+name = "candidate-bot"
+main = "src/index.ts"
+type = "service"
+compatibility_date = "2024-01-01"
+
+# Database D1 (SQLite)
+[[d1_databases]]
+binding = "DB"
+database_name = "candidates"
+database_id = "will-be-set-after-first-deploy"
+
+# Cron Trigger - каждый час (0 * * * *)
+[env.production]
+routes = [
+  { pattern = "example.com/reminder", zone_name = "example.com" }
+]
+
+[triggers]
+crons = ["0 * * * *"]  # Каждый час в начало часа
+
+# Переменные окружения
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+# Синтаксис для Cron:
+# ┌───────────── minute (0-59)
+# │ ┌───────────── hour (0-23)
+# │ │ ┌───────────── day of month (1-31)
+# │ │ │ ┌───────────── month (1-12)
+# │ │ │ │ ┌───────────── day of week (0-6) (Sunday to Saturday)
+# │ │ │ │ │
+# │ │ │ │ │
+# * * * * *
