@@ -44,13 +44,17 @@ class GoogleSheetsAPI:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                if not os.path.exists(GOOGLE_CREDENTIALS_FILE):
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                credentials_file = os.path.join(base_dir, GOOGLE_CREDENTIALS_FILE)
+                if not os.path.exists(credentials_file):
+                    credentials_file = "/etc/secrets/credentials.json"
+                if not os.path.exists(credentials_file):
                     raise FileNotFoundError(
-                        f"Файл {GOOGLE_CREDENTIALS_FILE} не найден. "
+                        f"Файл {credentials_file} не найден. "
                         f"Загрузите его из Google Cloud Console"
                     )
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    GOOGLE_CREDENTIALS_FILE, SCOPES
+                    credentials_file, SCOPES
                 )
                 creds = flow.run_local_server(port=0)
             
