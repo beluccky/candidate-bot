@@ -1,8 +1,4 @@
-from google.auth.transport.requests import Request
 from google.oauth2.service_account import Credentials
-from google.oauth2.credentials import Credentials as UserCredentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from config import GOOGLE_SHEETS_ID, GOOGLE_CREDENTIALS_FILE, COLUMNS
 import os
@@ -36,6 +32,18 @@ class GoogleSheetsAPI:
                 logger.warning(f"⚠️ Ошибка при парсинге GOOGLE_CREDENTIALS_JSON: {e}")
         
         # Вариант 2: Проверить наличие сохранённых учётных данных OAuth2 (для локального тестирования)
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        credentials_file = os.path.join(base_dir, GOOGLE_CREDENTIALS_FILE)
+        if not os.path.exists(credentials_file):
+            credentials_file = "/etc/secrets/credentials.json"
+        if not os.path.exists(credentials_file):
+            raise FileNotFoundError(
+                f"Файл {credentials_file} не найден. "
+                f"Загрузите его из Google Cloud Console"
+            )
+        creds = Credentials.from_service_account_file(credentials_file, scopes=SCOPES)
+        return build('sheets', 'v4', credentials=creds)
+
         if os.path.exists('token.json'):
             creds = UserCredentials.from_authorized_user_file('token.json', SCOPES)
         
