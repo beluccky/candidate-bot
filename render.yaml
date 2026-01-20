@@ -1,5 +1,5 @@
 services:
-  - type: web
+  - type: worker
     name: candidate-bot
     env: python
     plan: free
