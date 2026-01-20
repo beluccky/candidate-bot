@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Google Sheets
-GOOGLE_SHEETS_ID = os.getenv('GOOGLE_SHEETS_ID', '1jXV_w8PZ3cBAvJHYF5YgIph__O_5qXAxZW_rYOwvvvc')
+_raw_sheets_id = os.getenv('GOOGLE_SHEETS_ID', '1jXV_w8PZ3cBAvJHYF5YgIph__O_5qXAxZW_rYOwvvvc')
+GOOGLE_SHEETS_ID = _raw_sheets_id.strip()
 GOOGLE_CREDENTIALS_FILE = os.getenv('GOOGLE_CREDENTIALS_FILE', 'credentials.json')
 
 # Telegram
