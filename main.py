@@ -83,6 +83,8 @@ class CandidateBot:
     
     def _should_send_reminder(self, start_date_str):
         """Проверить, нужно ли отправить напоминание (за день до выхода)"""
+        if not start_date_str or not str(start_date_str).strip():
+            return False
         try:
             # Поддерживаемые форматы дат
             formats = ['%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y']
