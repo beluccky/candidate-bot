@@ -53,35 +53,43 @@ class CandidateBot:
         except Exception as e:
             logger.error(f"❌ Ошибка при проверке кандидатов: {e}")
     
-    async def check_reminders(self):
-        """Проверить, кому нужно отправить напоминание"""
+        async def check_reminders(self):
+        """?????????, ???? ????? ????????? ???????????"""
         try:
             candidates = self.db.get_candidates_for_reminder()
-            logger.info(f"Проверка напоминаний для {len(candidates)} кандидатов")
+            logger.info(f"???????? ??????????? ??? {len(candidates)} ??????????")
             
             for candidate_id, name, obj, start_date, recruiter_id in candidates:
+                logger.info(f"?? ????????: {name}, ????: {start_date}, ????????: {recruiter_id}")
+                
                 if self._should_send_reminder(start_date):
-                    # Получаем chat_id рекрутера из БД по его имени
+                    logger.info(f"? ???? ????????? ???: {name}")
+                    # ???????? chat_id ????????? ?? ?? ?? ??? ?????
                     chat_id = None
                     if recruiter_id:
                         chat_id = self.db.get_chat_id_by_recruiter_name(recruiter_id)
+                        logger.info(f"?? Chat ID ??? {recruiter_id}: {chat_id}")
                     
                     if chat_id:
-                        # Отправить напоминание зарегистрированному рекрутеру
+                        logger.info(f"?? ????????? ??????????? {name} ? chat {chat_id}")
+                        # ????????? ??????????? ??????????????????? ?????????
                         success = await self.telegram_bot.send_reminder(name, obj, chat_id)
                         
                         if success:
                             self.db.mark_reminder_sent(candidate_id)
-                            logger.info(f"📱 Напоминание отправлено {recruiter_id} о кандидате {name}")
+                            logger.info(f"? ??????????? ??????????: {name}")
                         else:
-                            logger.error(f"❌ Не удалось отправить напоминание для {name}")
+                            logger.error(f"? ?????? ????????: {name}")
                     else:
-                        logger.warning(f"⚠️ Рекрутер {recruiter_id} не зарегистрирован в боте (кандидат: {name})")
+                        logger.warning(f"?? Chat ID ?? ?????? ??? ????????? {recruiter_id}")
+                else:
+                    logger.info(f"?? ???? ?? ????????? ??? ?????? ???: {name}")
         
         except Exception as e:
-            logger.error(f"❌ Ошибка при проверке напоминаний: {e}")
-    
+            logger.error(f"? ?????? ? check_reminders: {e}")
+
     def _should_send_reminder(self, start_date_str):
+
         """Проверить, нужно ли отправить напоминание (за день до выхода)"""
         if not start_date_str or not str(start_date_str).strip():
             return False
