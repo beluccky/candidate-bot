@@ -64,7 +64,7 @@ class Database:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT id, candidate_id, name, object, start_date, recruiter_id
+                SELECT candidate_id, name, object, start_date, recruiter_id
                 FROM candidates
                 WHERE reminder_sent = 0
                 ORDER BY start_date ASC
